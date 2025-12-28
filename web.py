@@ -1,5 +1,6 @@
 import streamlit as st
 import functions
+from datetime import date,time
 
 st.markdown(
     """
@@ -44,6 +45,14 @@ st.markdown(
     div[data-testid="stCheckbox"] {
         margin-bottom: 12px;
     }
+    
+    div.stButton > button {
+    background-color: black;
+    color: white;
+    border-radius: 10px;
+    border: none;
+}
+
 
     /* Input box */
     input {
@@ -64,27 +73,73 @@ st.markdown(
 todos = functions.get_todos()
 
 def add_todo():
-    todo = st.session_state["new_todo"] + "\n"
+    task = st.session_state["task"]
+    due_date = st.session_state["due_date"]
+    due_time = st.session_state["due_time"]
+
+    formatted_time = due_time.strftime("%I:%M %p").lstrip("0").lower()
+    formatted_date = due_date.strftime("%d/%m/%Y")
+
+    todo = f"{task} | {formatted_time} || {formatted_date}\n"
     todos.append(todo)
     functions.write_todos(todos)
 
-
-
-
-st.title('My Todo App')
-st.subheader('This is my Todo App')
+st.title("📝 Todo App with Due Dates")
+st.subheader("Stay organized. Stay productive.")
 st.write("This app is to increase your productivity")
 
-for index,todo in enumerate(todos):
-    checkbox = st.checkbox(todo,key=todo)
-    if checkbox:
+for index, todo in enumerate(todos):
+
+    parts = todo.strip().split(" | ", 1)
+    task = parts[0]
+
+    time_date = parts[1] if len(parts) == 2 else ""
+
+    if "||" in time_date:
+        time_part, date_part = time_date.split("||")
+    else:
+        time_part, date_part = "", ""
+
+    col1, col2 = st.columns([4, 1])
+
+    with col1:
+        checked = st.checkbox(task, key=f"todo_{index}")
+
+    with col2:
+        st.markdown(
+            f"""
+            <div style="text-align:right; color:white;">
+                <div style="font-weight:600;">{time_part.strip()}</div>
+                <div style="font-size:14px; opacity:0.8;">{date_part.strip()}</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    if checked:
         todos.pop(index)
         functions.write_todos(todos)
-        del st.session_state[todo]
+        del st.session_state[f"todo_{index}"]
         st.rerun()
 
-st.text_input(label="", placeholder="Add a new todo...",
-              on_change=add_todo,key="new_todo")
+
+st.text_input(
+    label="",
+    placeholder="Add a new todo...",
+    key="task"
+)
+st.time_input(
+    label="Time",
+    key="due_time"
+)
+
+st.date_input(
+    label="Due date",
+    min_value=date.today(),
+    key="due_date"
+)
+
+st.button("Add Task", on_click=add_todo)
 
 
 
