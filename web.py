@@ -142,7 +142,10 @@ for index, todo in enumerate(todos):
 
             url = "https://calendar.google.com/calendar/render?" + urllib.parse.urlencode(params)
 
-            st.link_button("📅", url)
+            st.markdown(
+                f'<a href="{url}" target="_blank" style="text-decoration:none;font-size:22px;">📅</a>',
+                unsafe_allow_html=True
+            )
 
     if checked:
         todos.pop(index)
