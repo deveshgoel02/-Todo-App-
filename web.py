@@ -1,12 +1,13 @@
 import streamlit as st
 import functions
-from datetime import date,time
+from datetime import date, time
 
 st.markdown(
     """
     <style>
     /* Full gradient background */
-    .stApp {
+
+.stApp {
         background: linear-gradient(135deg, #667eea, #764ba2);
         font-family: 'Segoe UI', sans-serif;
     }
@@ -35,17 +36,14 @@ st.markdown(
         color: #f1f1f1;
     }
 
-    /* Todo text */
-    label {
-        color: white !important;
-        font-size: 18px;
-    }
+
+
 
     /* Checkbox spacing */
     div[data-testid="stCheckbox"] {
         margin-bottom: 12px;
     }
-    
+
     div.stButton > button {
     background-color: black;
     color: white;
@@ -54,12 +52,9 @@ st.markdown(
 }
 
 
-    /* Input box */
-    input {
-        border-radius: 12px !important;
-        padding: 12px !important;
-        font-size: 16px !important;
-    }
+
+
+
 
     /* Remove Streamlit footer */
     footer {
@@ -71,6 +66,7 @@ st.markdown(
 )
 
 todos = functions.get_todos()
+
 
 def add_todo():
     task = st.session_state["task"]
@@ -84,8 +80,11 @@ def add_todo():
     todos.append(todo)
     functions.write_todos(todos)
 
-st.title("📝 Todo App with Due Dates")
-st.subheader("Stay organized. Stay productive.")
+
+with st.container():
+    st.title("📝 Todo App with Due Dates")
+    st.subheader("Stay organized. Stay productive.")
+
 st.write("This app is to increase your productivity")
 
 for index, todo in enumerate(todos):
@@ -121,7 +120,6 @@ for index, todo in enumerate(todos):
         functions.write_todos(todos)
         del st.session_state[f"todo_{index}"]
         st.rerun()
-
 
 st.text_input(
     label="",
