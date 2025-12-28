@@ -2,7 +2,7 @@ import streamlit as st
 import functions
 import urllib.parse
 from datetime import date, time
-from datetime import datetime
+from datetime import datetime,timedelta
 
 st.markdown(
     """
@@ -69,22 +69,12 @@ st.markdown(
 
 todos = functions.get_todos()
 
-def open_google_calendar(task, date_obj, time_obj):
-    start = datetime.combine(date_obj, time_obj)
-    end = start.replace(hour=start.hour + 1)
-
-    params = {
-        "action": "TEMPLATE",
-        "text": task,
-        "dates": f"{start.strftime('%Y%m%dT%H%M%S')}/{end.strftime('%Y%m%dT%H%M%S')}"
-    }
-
-    url = "https://calendar.google.com/calendar/render?" + urllib.parse.urlencode(params)
-    st.markdown(f"[📅 Add reminder to Google Calendar]({url})")
-
 
 def add_todo():
-    task = st.session_state["task"]
+    task = st.session_state["task"].strip()
+    if not task:
+        return
+
     due_date = st.session_state["due_date"]
     due_time = st.session_state["due_time"]
 
@@ -94,6 +84,9 @@ def add_todo():
     todo = f"{task} | {formatted_time} || {formatted_date}\n"
     todos.append(todo)
     functions.write_todos(todos)
+
+    st.session_state["task"] = ""
+
 
 
 with st.container():
@@ -105,6 +98,9 @@ st.write("This app is to increase your productivity")
 for index, todo in enumerate(todos):
 
     parts = todo.strip().split(" | ", 1)
+    if len(parts) < 2:
+        continue
+
     task = parts[0]
 
     time_date = parts[1] if len(parts) == 2 else ""
@@ -117,7 +113,7 @@ for index, todo in enumerate(todos):
     col1, col2, col3 = st.columns([4, 1, 1])
 
     with col1:
-        checked = st.checkbox(task, key=f"todo_{index}")
+        checked = st.checkbox(task, key=f"{task}_{index}")
 
     with col2:
         st.markdown(
@@ -132,21 +128,21 @@ for index, todo in enumerate(todos):
 
     with col3:
         if time_part and date_part:
-            # Convert back to datetime for Google Calendar
             date_obj = datetime.strptime(date_part.strip(), "%d/%m/%Y").date()
             time_obj = datetime.strptime(time_part.strip(), "%I:%M %p").time()
 
             start = datetime.combine(date_obj, time_obj)
-            end = start.replace(hour=start.hour + 1)
+            end = start + timedelta(hours=1)
 
             params = {
                 "action": "TEMPLATE",
                 "text": task,
-                "dates": f"{start.strftime('%Y%m%dT%H%M%S')}/{end.strftime('%Y%m%dT%H%M%S')}"
+                "dates": f"{start.strftime('%Y%m%dT%H%M%S')}Z/{end.strftime('%Y%m%dT%H%M%S')}Z"
             }
 
             url = "https://calendar.google.com/calendar/render?" + urllib.parse.urlencode(params)
-            st.markdown(f"[📅]({url})")
+
+            st.link_button("📅", url)
 
     if checked:
         todos.pop(index)
