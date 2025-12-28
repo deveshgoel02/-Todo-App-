@@ -1,6 +1,8 @@
 import streamlit as st
 import functions
+import urllib.parse
 from datetime import date, time
+from datetime import datetime
 
 st.markdown(
     """
@@ -67,6 +69,19 @@ st.markdown(
 
 todos = functions.get_todos()
 
+def open_google_calendar(task, date_obj, time_obj):
+    start = datetime.combine(date_obj, time_obj)
+    end = start.replace(hour=start.hour + 1)
+
+    params = {
+        "action": "TEMPLATE",
+        "text": task,
+        "dates": f"{start.strftime('%Y%m%dT%H%M%S')}/{end.strftime('%Y%m%dT%H%M%S')}"
+    }
+
+    url = "https://calendar.google.com/calendar/render?" + urllib.parse.urlencode(params)
+    st.markdown(f"[📅 Add reminder to Google Calendar]({url})")
+
 
 def add_todo():
     task = st.session_state["task"]
@@ -95,11 +110,11 @@ for index, todo in enumerate(todos):
     time_date = parts[1] if len(parts) == 2 else ""
 
     if "||" in time_date:
-        time_part, date_part = time_date.split("||")
+        time_part, date_part = time_date.split("||", 1)
     else:
         time_part, date_part = "", ""
 
-    col1, col2 = st.columns([4, 1])
+    col1, col2, col3 = st.columns([4, 1, 1])
 
     with col1:
         checked = st.checkbox(task, key=f"todo_{index}")
@@ -115,11 +130,30 @@ for index, todo in enumerate(todos):
             unsafe_allow_html=True
         )
 
+    with col3:
+        if time_part and date_part:
+            # Convert back to datetime for Google Calendar
+            date_obj = datetime.strptime(date_part.strip(), "%d/%m/%Y").date()
+            time_obj = datetime.strptime(time_part.strip(), "%I:%M %p").time()
+
+            start = datetime.combine(date_obj, time_obj)
+            end = start.replace(hour=start.hour + 1)
+
+            params = {
+                "action": "TEMPLATE",
+                "text": task,
+                "dates": f"{start.strftime('%Y%m%dT%H%M%S')}/{end.strftime('%Y%m%dT%H%M%S')}"
+            }
+
+            url = "https://calendar.google.com/calendar/render?" + urllib.parse.urlencode(params)
+            st.markdown(f"[📅]({url})")
+
     if checked:
         todos.pop(index)
         functions.write_todos(todos)
-        del st.session_state[f"todo_{index}"]
         st.rerun()
+
+
 
 st.text_input(
     label="",
